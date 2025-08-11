@@ -90,7 +90,7 @@ runs:
         echo "Patching with:"
         cat /tmp/catalog.patch
 
-        echo "lines=$(wc-l /tmp/catalog.patch)" >> "$GITHUB_OUTPUT"
+        echo "lines=$(wc -l /tmp/catalog.patch)" >> "$GITHUB_OUTPUT"
 
         if [[ -s /tmp/catalog.patch ]]; then
           cd "$DEST"
