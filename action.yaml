@@ -83,8 +83,8 @@ runs:
       run: |
         set -x
         echo "$DIRS" | tr ',' '\n' | while read dir; do
-          echo "diffing base/$dir and update/$dir"
-          diff -ruN "base/$dir" "update/$dir" || echo "Failed to diff" 1>2
+          # Diff exits with status 1 if a diff is found
+          diff -ruN "base/$dir" "update/$dir" || true
         done > /tmp/catalog.patch
 
         echo "Patching with:"
