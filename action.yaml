@@ -85,11 +85,15 @@ runs:
           diff -ruN "base/$dir" "update/$dir"
         done > /tmp/catalog.patch
 
-        cd "$DEST"
-
-        patch -p1 /tmp/catalog.patch
+        echo "Patching with:"
+        cat /tmp/catalog.patch
 
         echo "lines=$(wc-l /tmp/catalog.patch)" >> "$GITHUB_OUTPUT"
+
+        if [[ -s /tmp/catalog.patch ]]; then
+          cd "$DEST"
+          patch -p1 /tmp/catalog.patch
+        fi
 
     - name: Track previous commit
       # N.B. this is used by the `baseline` step, above, to determine the base for the _next_ diff.
