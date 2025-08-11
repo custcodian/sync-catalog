@@ -1,0 +1,103 @@
+name: Sync Minder Policies
+author: custcodian
+description: |
+branding:
+  icon: package
+  color: blue
+inputs:
+  catalog_repo:
+    description: The repository which contains the rule catalog
+    default: custcodian/minder-rules-and-profiles
+  catalog_ref:
+    description: The ref in the catalog repository to update to
+    default: main
+  policy_dirs:
+    description: The policy directories to sync.
+    default: [top-5]
+  target_dir:
+    description: The destination directory to sync to
+    default: minder
+  pr_labels:
+    description: Labels to apply to the resulting PR.
+    default: [automated pr, chore]
+runs:
+  using: composite
+
+  steps:
+    - name: Checkout local repository
+      uses: actions/checkout@v4
+      with:
+        path: github
+
+    - name: Ensure target directory
+      shell: bash
+      run: mkdir -p "github/${{ inputs.target_dir }}"
+
+    - name: Get previous commit
+      id: baseline
+      shell: bash
+      run: |
+        prev_commit=$(egrep -o '/tree/([a-f0-9]+)' "github/${{ inputs.target_dir }}/README.md" | cut -d/ -f3)
+        echo "commit=$prev_commit" >> "$GITHUB_OUTPUT"
+
+    # These two steps will either checkout the old base, or produce an empty base for comparison.
+    - name: Checkout ${{ inputs.catalog_repo }} repository at previous
+      if: (steps.baseline.outputs.commit != "")
+      id: reference-checkout
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ inputs.catalog_repo }}
+        ref: ${{ (steps.baseline.outputs.commit }}
+        path: base
+    - name: Create empty previous repo
+      if: (steps.baseline.outputs.commit == "")
+      shell: bash
+      env:
+        DIRS: join(inputs.policy_dirs, "\0")
+      run: |
+        mkdir base
+        cd base
+        echo "$DIRS" | xargs -0 mkdir
+
+    - name: Checkout ${{ inputs.catalog_repo }} repository at current
+      id: current-checkout
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ inputs.catalog_repo }}
+        ref: ${{ inputs.catalog_ref }}
+        path: update
+
+    - name: Sync policy files
+      shell: bash
+      env:
+        DIRS: join(inputs.target_dirs, "\n")
+        DEST: 'github/${{ inputs.target_dir }}'
+      run: |        
+        echo "$DIRS" | while read dir; do
+          diff -ruN "base/$dir" "update/$dir"
+        done > /tmp/catalog.patch
+
+        cd "github/$DEST"
+
+        patch -p1 /tmp/catalog.patch
+
+    - name: Track previous commit
+      # N.B. this is used by the `baseline` step, above, to determine the base for the _next_ diff.
+      shell: bash
+      run: |
+        echo "These policies copied from [${{ inputs.catalog_repo }} at commit ${{ steps.current-checkout.outputs.commit }}](https://github.com/${{ inputs.catalog_repo }}/tree/${{ steps.current-checkout.outputs.commit }})" > "github/${{ inputs.target_dir }}/README.md"
+
+    - name: Create Pull Request
+      uses: peter-evans/create-pull-request@v7
+      with:
+        path: github
+        commit-message: 'chore: sync minder policies at ${{ steps.current-checkout.outputs.commit }} from ${{ inputs.catalog_repo }}'
+        title: "Update Minder Policies"
+        body: |
+          This PR updates the minder policies [from the `${{ inputs.catalog_repo }}` repository at ${{ steps.current-checkout.outputs.ref }}](https://github.com/${{ inputs.catalog_repo }}/tree/${{ steps.current-checkout.outputs.commit }}).
+
+          This is an automated PR.
+        branch: "chore/sync-minder-catalog"
+        sign-commits: true
+        delete-branch: true
+        labels: join(inputs.labels, ", ")
