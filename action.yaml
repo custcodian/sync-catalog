@@ -78,14 +78,14 @@ runs:
       id: patch
       shell: bash
       env:
-        DIRS: inputs.target_dirs
+        DIRS: ${{ inputs.target_dirs }}
         DEST: 'github/${{ inputs.target_dir }}'
       run: |        
         echo "$DIRS" | tr ',' '\n' | while read dir; do
           diff -ruN "base/$dir" "update/$dir"
         done > /tmp/catalog.patch
 
-        cd "github/$DEST"
+        cd "$DEST"
 
         patch -p1 /tmp/catalog.patch
 
