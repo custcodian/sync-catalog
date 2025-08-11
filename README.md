@@ -32,7 +32,7 @@ jobs:
     # with the top-5 policies from custcodian/minder-rules-and-profiles.
     # (this is the default configuration)
     - name: Sync catalog
-      uses: custcodian/sync-catalog
+      uses: custcodian/sync-catalog@v1
       with:
         policy_dirs:
           - top-5
