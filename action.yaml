@@ -36,8 +36,13 @@ runs:
     - name: Get previous commit
       id: baseline
       shell: bash
+      env:
+        README: 'github/${{ inputs.target_dir }}/README.md'
       run: |
-        prev_commit=$(egrep -o '/tree/([a-f0-9]+)' "github/${{ inputs.target_dir }}/README.md" | cut -d/ -f3)
+        prev_commit=""
+        if [[ -f "$README" ]]; then
+          prev_commit="$(egrep -o '/tree/([a-f0-9]+)' "$README" | cut -d/ -f3)"
+        fi
         echo "commit=$prev_commit" >> "$GITHUB_OUTPUT"
 
     # These two steps will either checkout the old base, or produce an empty base for comparison.
