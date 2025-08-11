@@ -6,20 +6,20 @@ branding:
   color: blue
 inputs:
   catalog_repo:
-    description: The repository which contains the rule catalog
+    description: The repository which contains the rule catalog.
     default: custcodian/minder-rules-and-profiles
   catalog_ref:
-    description: The ref in the catalog repository to update to
+    description: The ref in the catalog repository to update to.
     default: main
   policy_dirs:
-    description: The policy directories to sync.
-    default: [top-5]
+    description: The policy directories to sync, comma-separated.
+    default: top-5
   target_dir:
-    description: The destination directory to sync to
+    description: The destination directory to sync to.
     default: minder
   pr_labels:
-    description: Labels to apply to the resulting PR.
-    default: [automated pr, chore]
+    description: Labels to apply to the resulting PR, as a comma-separated list.
+    default: automated pr, chore
 runs:
   using: composite
 
@@ -53,11 +53,13 @@ runs:
       if: (steps.baseline.outputs.commit == "")
       shell: bash
       env:
-        DIRS: join(inputs.policy_dirs, "\0")
+        DIRS: inputs.policy_dirs
       run: |
         mkdir base
         cd base
-        echo "$DIRS" | xargs -0 mkdir
+        echo "$DIRS" | tr ',' '\n' | while read dir; do
+          mkdir "base/$dir"
+        done
 
     - name: Checkout ${{ inputs.catalog_repo }} repository at current
       id: current-checkout
@@ -67,13 +69,14 @@ runs:
         ref: ${{ inputs.catalog_ref }}
         path: update
 
-    - name: Sync policy files
+    - name: Patch policy files
+      id: patch
       shell: bash
       env:
-        DIRS: join(inputs.target_dirs, "\n")
+        DIRS: inputs.target_dirs
         DEST: 'github/${{ inputs.target_dir }}'
       run: |        
-        echo "$DIRS" | while read dir; do
+        echo "$DIRS" | tr ',' '\n' | while read dir; do
           diff -ruN "base/$dir" "update/$dir"
         done > /tmp/catalog.patch
 
@@ -81,13 +84,18 @@ runs:
 
         patch -p1 /tmp/catalog.patch
 
+        echo "lines=$(wc-l /tmp/catalog.patch)" >> "$GITHUB_OUTPUT"
+
     - name: Track previous commit
       # N.B. this is used by the `baseline` step, above, to determine the base for the _next_ diff.
       shell: bash
       run: |
         echo "These policies copied from [${{ inputs.catalog_repo }} at commit ${{ steps.current-checkout.outputs.commit }}](https://github.com/${{ inputs.catalog_repo }}/tree/${{ steps.current-checkout.outputs.commit }})" > "github/${{ inputs.target_dir }}/README.md"
 
+    # Only propose a PR if there were at least _some_ interesting lines
+    # updated (not just the sentinel file)
     - name: Create Pull Request
+      if: steps.patch.outputs.lines > 0
       uses: peter-evans/create-pull-request@v7
       with:
         path: github
@@ -100,4 +108,4 @@ runs:
         branch: "chore/sync-minder-catalog"
         sign-commits: true
         delete-branch: true
-        labels: join(inputs.labels, ", ")
+        labels: inputs.labels, ", "

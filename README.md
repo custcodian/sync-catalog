@@ -34,8 +34,7 @@ jobs:
     - name: Sync catalog
       uses: custcodian/sync-catalog@v1
       with:
-        policy_dirs:
-          - top-5
+        policy_dirs: top-5
         target_dir: minder
 ```
 
@@ -51,7 +50,7 @@ _(optional)_ The ref in the catalog repository to update to. The previous refere
 
 ### `policy_dirs`
 
-_(optional)_ A list of policy directories to sync. Dy default, this is set to `[top-5]`.
+_(optional)_ A comma-separated list of policy directories to sync. Dy default, this is set to `top-5`.
 
 ### `target_dir`
 
@@ -59,4 +58,4 @@ _(optional)_ The destination directory to sync to. Dy default, this is set to `m
 
 ### `pr_labels`
 
-_(optional)_ Labels to apply to the resulting PR. Dy default, this is set to `[automated pr, chore]`.
+_(optional)_ A comma-separated list of labels to apply to the resulting PR. Dy default, this is set to `automated pr, chore`.
