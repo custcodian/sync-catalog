@@ -42,15 +42,15 @@ runs:
 
     # These two steps will either checkout the old base, or produce an empty base for comparison.
     - name: Checkout ${{ inputs.catalog_repo }} repository at previous
-      if: (steps.baseline.outputs.commit != "")
+      if: (steps.baseline.outputs.commit != '')
       id: reference-checkout
       uses: actions/checkout@v4
       with:
         repository: ${{ inputs.catalog_repo }}
-        ref: ${{ (steps.baseline.outputs.commit }}
+        ref: ${{ steps.baseline.outputs.commit }}
         path: base
     - name: Create empty previous repo
-      if: (steps.baseline.outputs.commit == "")
+      if: (steps.baseline.outputs.commit == '')
       shell: bash
       env:
         DIRS: inputs.policy_dirs
