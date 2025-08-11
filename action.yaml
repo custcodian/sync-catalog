@@ -105,7 +105,7 @@ runs:
       run: |
         cd github
         echo "These policies copied from [${{ inputs.catalog_repo }} at commit ${{ steps.current-checkout.outputs.commit }}](https://github.com/${{ inputs.catalog_repo }}/tree/${{ steps.current-checkout.outputs.commit }})" > "$SENTINEL"
-        git add "$SENTINEL"
+        git add .
 
     # Only propose a PR if there were at least _some_ interesting lines
     # updated (not just the sentinel file)
