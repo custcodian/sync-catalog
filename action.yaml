@@ -94,18 +94,17 @@ runs:
 
         if [[ -s /tmp/catalog.patch ]]; then
           cd "$DEST"
-          patch -p1 /tmp/catalog.patch
+          patch -p1 </tmp/catalog.patch
         fi
 
     - name: Track previous commit
       # N.B. this is used by the `baseline` step, above, to determine the base for the _next_ diff.
       shell: bash
       env:
-        SENTINEL: '${{ inputs.target_dir }}/README.md'
+        DEST: 'github/${{ inputs.target_dir }}'
       run: |
-        cd github
-        echo "These policies copied from [${{ inputs.catalog_repo }} at commit ${{ steps.current-checkout.outputs.commit }}](https://github.com/${{ inputs.catalog_repo }}/tree/${{ steps.current-checkout.outputs.commit }})" > "$SENTINEL"
-        git add .
+        cd "$DEST"
+        echo "These policies copied from [${{ inputs.catalog_repo }} at commit ${{ steps.current-checkout.outputs.commit }}](https://github.com/${{ inputs.catalog_repo }}/tree/${{ steps.current-checkout.outputs.commit }})" > README.md
 
     # Only propose a PR if there were at least _some_ interesting lines
     # updated (not just the sentinel file)
