@@ -123,4 +123,4 @@ runs:
         branch: "chore/sync-minder-catalog"
         sign-commits: true
         delete-branch: true
-        labels: inputs.labels, ", "
+        labels: ${{ inputs.labels }}
