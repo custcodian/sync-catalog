@@ -61,7 +61,6 @@ runs:
         DIRS: ${{ inputs.policy_dirs }}
       run: |
         mkdir base
-        cd base
         echo "$DIRS" | tr ',' '\n' | while read dir; do
           mkdir "base/$dir"
         done
