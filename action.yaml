@@ -20,6 +20,9 @@ inputs:
   pr_labels:
     description: Labels to apply to the resulting PR, as a comma-separated list.
     default: automated pr, chore
+  filter_files:
+    description: Find pattern to filter synced files to avoid test files, etc.
+    default: '*.test*'
 runs:
   using: composite
 
@@ -72,6 +75,15 @@ runs:
         repository: ${{ inputs.catalog_repo }}
         ref: ${{ inputs.catalog_ref }}
         path: update
+
+    - name: Ignore unwanted files
+      if: ${{ inputs.filter_files != '' }}
+      shell: bash
+      env:
+        FILTER: ${{ inputs.filter_files }}
+      run: |
+        echo "Filtering files matching: $FILTER"
+        find base update -path "$FILTER" -print -delete
 
     - name: Patch policy files
       id: patch

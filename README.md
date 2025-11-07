@@ -59,3 +59,7 @@ _(optional)_ The destination directory to sync to. Dy default, this is set to `m
 ### `pr_labels`
 
 _(optional)_ A comma-separated list of labels to apply to the resulting PR. Dy default, this is set to `automated pr, chore`.
+
+### `filter_files`
+
+_(optional)_ A `find` path expression matching files would should not be synced from the source.  By default, this is set to `*.test*` to avoid picking up rule testing contents.
